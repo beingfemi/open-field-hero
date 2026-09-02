@@ -202,7 +202,7 @@
   .cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 
   @media (prefers-reduced-motion: reduce) {
-    .cta::after, nav.links a::after, .trail-img { transition: none; }
+    .cta::after, nav.links a::after { transition: none; }
   }
 
   @media (max-width: 640px) {
@@ -223,6 +223,7 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script>
   (function () {
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -244,17 +245,15 @@
       });
 
     function initTrail(TRAIL_IMAGES) {
-      // Cursor trail, matched to the reference's own implementation (read straight out of
-      // its bundle): a pool of 18 recycled <img> nodes, pointermove scoped to the hero only,
-      // a 90px move-distance throttle, positions that snap instantly (no lag), and a reveal
-      // that pops in (scale .82->1, .35s, ease-out-quart) then fades (opacity 1->0, .5s,
-      // ease-in-cubic, starting right as the pop-in finishes). GSAP isn't available here
-      // (Artifacts can't load outside scripts), so the same two easings are reproduced with
-      // CSS cubic-bezier equivalents of power3.out / power2.in.
+      // Cursor trail — this now runs on the real GSAP library (loaded via CDN above),
+      // calling it exactly the way the reference's own bundle does, instead of
+      // approximating power3.out/power2.in with a CSS cubic-bezier. A single
+      // cubic-bezier can't actually reproduce GSAP's power eases (they're a different
+      // curve family), and the old forced-reflow "snap" trick could jank under fast
+      // mouse movement — using GSAP directly fixes both, and matches the reference's
+      // pool-of-18 / 90px-throttle / instant-snap-on-first-move behavior exactly.
       var POOL_SIZE = 18;
       var MIN_DIST = 90;
-      var EASE_OUT_QUART = 'cubic-bezier(0.25, 1, 0.5, 1)';
-      var EASE_IN_CUBIC = 'cubic-bezier(0.55, 0.055, 0.675, 0.19)';
 
       var pool = [];
       for (var i = 0; i < POOL_SIZE; i++) {
@@ -262,10 +261,11 @@
         img.className = 'trail-img';
         img.alt = '';
         layer.appendChild(img);
+        gsap.set(img, { xPercent: -50, yPercent: -50 });
         pool.push(img);
       }
 
-      var poolIdx = 0, imgIdx = 0, z = 0, last = null;
+      var poolIdx = 0, imgIdx = 0, z = 0, started = false, lastX = 0, lastY = 0;
 
       function spawn(x, y) {
         var img = pool[poolIdx];
@@ -273,30 +273,20 @@
         img.src = TRAIL_IMAGES[imgIdx];
         imgIdx = (imgIdx + 1) % TRAIL_IMAGES.length;
 
-        img.style.zIndex = ++z;
-        img.style.left = x + 'px';
-        img.style.top = y + 'px';
-
-        // snap to position + starting scale/opacity with no transition
-        img.style.transition = 'none';
-        img.style.transform = 'translate(-50%, -50%) scale(0.82)';
-        img.style.opacity = '1';
-        void img.offsetWidth; // force reflow so the "from" state is committed
-
-        // then animate to the revealed/settled state
-        img.style.transition =
-          'transform 0.35s ' + EASE_OUT_QUART + ', opacity 0.5s ' + EASE_IN_CUBIC + ' 0.35s';
-        img.style.transform = 'translate(-50%, -50%) scale(1)';
-        img.style.opacity = '0';
+        gsap.killTweensOf(img);
+        gsap.set(img, { x: x, y: y, scale: 0.82, opacity: 1, zIndex: ++z });
+        gsap.timeline()
+          .to(img, { scale: 1, duration: 0.35, ease: 'power3.out' }, 0)
+          .to(img, { opacity: 0, duration: 0.5, ease: 'power2.in' }, 0.35);
       }
 
       document.getElementById('hero').addEventListener('pointermove', function (e) {
         var r = this.getBoundingClientRect();
         var x = e.clientX - r.left, y = e.clientY - r.top;
-        if (!last) { last = { x: x, y: y }; spawn(x, y); return; }
-        var dx = x - last.x, dy = y - last.y;
+        if (!started) { started = true; lastX = x; lastY = y; spawn(x, y); return; }
+        var dx = x - lastX, dy = y - lastY;
         if (dx * dx + dy * dy < MIN_DIST * MIN_DIST) return;
-        last = { x: x, y: y };
+        lastX = x; lastY = y;
         spawn(x, y);
       });
     }
