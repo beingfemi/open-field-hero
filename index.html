@@ -146,12 +146,20 @@
   }
 
   .tagline {
+    /* WIDTH: how wide the text block is before it wraps to a new line.
+       1rem = 16px, so 40rem = 640px. Bigger number = longer lines. */
     max-width: 40rem;
     margin: 0;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: -0.02em;
     line-height: 0.95;
+    /* SIZE: fluid — it scales with the window width instead of being one fixed
+       number. Reading the 3 values left to right: 1.15rem is the SMALLEST it
+       will ever get (narrow/phone screens), 3.26vw is how fast it grows as the
+       window widens, 2.35rem is the LARGEST it will ever get (wide screens).
+       To make it one plain size that doesn't change with window width, delete
+       this whole clamp(...) and replace it with e.g. `font-size: 2rem;` instead. */
     font-size: clamp(1.15rem, 3.26vw, 2.35rem);
     color: #fff;
   }
