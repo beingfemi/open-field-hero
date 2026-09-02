@@ -11,6 +11,11 @@ echo "[watch-and-commit] watching $(pwd) every ${INTERVAL}s"
 while true; do
   sleep "$INTERVAL"
   if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+    # Optional per-project pre-commit step (e.g. regenerating a manifest from a
+    # folder of assets). Runs before staging so its output is part of the commit.
+    if [ -x "_scripts/pre-commit.sh" ]; then
+      ./_scripts/pre-commit.sh
+    fi
     git add -A
     git commit -m "auto: sync $(date '+%Y-%m-%d %H:%M:%S')" >/dev/null
     if git push >/dev/null 2>&1; then
