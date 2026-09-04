@@ -44,6 +44,8 @@
 
   body {
     font-family: var(--font-display);
+    font-size: 12px;
+    line-height: 15px;
     -webkit-font-smoothing: antialiased;
     cursor: default;
   }
@@ -155,18 +157,8 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: -0.02em;
-    line-height: 0.95;
-    /* SIZE: fluid — it scales with the window width instead of being one fixed
-       number. Reading the 3 values left to right: 1.15rem is the SMALLEST it
-       will ever get (narrow/phone screens), 3.26vw is how fast it grows as the
-       window widens, 3rem is the LARGEST it will ever get (wide screens — raised
-       from 2.35rem so it reads with more presence on desktop). The 3.26vw middle
-       value is measured directly off the reference site, so sizing stays accurate
-       through the range where it's the governing value; only the wide-screen cap
-       was a judgment call, since the reference started blocking re-measurement.
-       To make it one plain size that doesn't change with window width, delete
-       this whole clamp(...) and replace it with e.g. `font-size: 2rem;` instead. */
-    font-size: clamp(1.15rem, 3.26vw, 3rem);
+    line-height: 37px;
+    font-size: 38px;
     color: #fff;
   }
 
@@ -186,7 +178,8 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35em;
-    font-size: 0.82rem;
+    font-size: 12px;
+    line-height: 15px;
     letter-spacing: -0.014em;
     text-decoration: none;
     color: #fff;
